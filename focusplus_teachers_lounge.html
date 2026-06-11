@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Focus+ Teachers Lounge — Mock Dashboard</title>
+  <link rel="icon" href="data:,"><style>
+    :root{
+      --bg:#071133; /* deep navy */
+      --card:#0f2347; /* darker blue */
+      --muted:#9fb0d8;
+      --accent:#00bfa6; /* teal highlight */
+      --white:#ffffff;
+      --danger:#ff4d4f;
+      --warn:#ffcc33;
+      --ok:#3fe27b;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--muted);background:linear-gradient(180deg,var(--bg),#04102a);}
+    .app{display:grid;grid-template-columns:1fr 420px;grid-gap:20px;padding:26px;gap:20px;height:100vh;box-sizing:border-box}
+    header{grid-column:1/-1;display:flex;align-items:center;gap:16px}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0b356b,#0f5fb3);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--white);font-size:22px}
+    h1{margin:0;color:var(--white);font-size:20px}
+    .left{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:14px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:var(--white);padding:8px 12px;border-radius:8px;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,#0ea5b2,#00b4a6);border:none}
+    .layout{display:grid;grid-template-columns:1fr;gap:12px}
+
+    /* classroom grid */
+    .classroom{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:10px}
+    .group{background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;min-height:200px;display:flex;flex-direction:column;gap:10px;align-items:center}
+    .group h4{margin:0;font-size:12px;color:var(--white);display:flex;justify-content:space-between;align-items:center;width:100%}
+
+    /* new group layout: center-top and 2x2 grid below */
+    .group-layout{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+    .center-top{width:42px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+    .grid2x2{display:grid;grid-template-columns:repeat(2,44px);grid-template-rows:repeat(2,44px);gap:8px}
+    .seat{width:44px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+    .legend{display:flex;gap:8px;align-items:center}
+    .legend .item{display:flex;gap:6px;align-items:center;font-size:12px}
+    .sw{width:14px;height:14px;border-radius:3px}
+
+    /* right panel */
+    .right{background:var(--card);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:10px;border-radius:8px}
+    canvas{background:transparent}
+    .stats{display:flex;gap:8px;align-items:center}
+    .stat-card{flex:1;padding:12px;border-radius:8px;background:var(--glass);text-align:center}
+    .stat-card h3{margin:0;color:var(--white)}
+
+    /* Ana chatbot */
+    .ana{display:flex;flex-direction:column;gap:8px;height:320px}
+    .ana .messages{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+    .msg{max-width:80%;padding:8px 10px;border-radius:10px;font-size:13px}
+    .msg.ana{background:rgba(2,18,34,0.6);align-self:flex-start;color:var(--white)}
+    .msg.user{background:linear-gradient(90deg,#0ea5b2,#00b4a6);align-self:flex-end;color:#021426}
+    .ana-controls{display:flex;gap:8px}
+    .small{font-size:12px;color:var(--muted)}
+
+    footer{grid-column:1/-1;color:var(--muted);font-size:12px;padding:6px 26px}
+
+    /* color helpers */
+    .c-good{background:var(--ok)}
+    .c-mid{background:var(--warn)}
+    .c-bad{background:var(--danger)}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(1,6,12,0.6);display:none;align-items:center;justify-content:center}
+    .modal{background:linear-gradient(180deg,#071833,#0b2a4d);border-radius:10px;padding:18px;color:var(--white);width:420px;box-shadow:0 10px 30px rgba(0,0,0,0.7)}
+    .modal button{margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">F+</div>
+      <div>
+        <h1>Focus+ Teachers Lounge</h1>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <div class="legend small">
+          <div class="item"><div class="sw" style="background:var(--ok)"></div> Focused</div>
+          <div class="item"><div class="sw" style="background:var(--warn)"></div> Mildly Distracted</div>
+          <div class="item"><div class="sw" style="background:var(--danger)"></div> Distracted</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="left">
+      <div class="controls">
+        <div style="flex:1">
+          <div class="small">Session</div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn" id="btnStart">Generate Demo Data</button>
+            <button class="btn primary" id="btnKeyword">Simulate Keyword/Question</button>
+            <button class="btn" id="btnReset">Reset</button>
+          </div>
+        </div>
+        <div style="width:220px;text-align:right">
+          <div class="small">Selected Group</div>
+          <div style="margin-top:6px;color:var(--white);font-weight:700" id="selGroup">None</div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="classroom panel" id="classroom"></div>
+        <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+          <div class="small">Heatmap shows recent distraction intensity per table (red = high)</div>
+          <div class="small">Click a group to see Ana's recommendations</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="color:var(--white)">Class Attention Trend</strong>
+          <div class="small">Live-ish demo • 60s window</div>
+        </div>
+        <canvas id="trendChart" height="120"></canvas>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <div class="stat-card panel">
+          <div class="small">Overall Distracted</div>
+          <h3 id="overall">12%</h3>
+        </div>
+        <div class="stat-card panel">
+          <div class="small">Most Distracted Group</div>
+          <h3 id="topGroup">—</h3>
+        </div>
+      </div>
+
+      <div class="panel ana">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="color:var(--white)">Ana — Teaching Assistant (mock)</strong>
+          <div class="small">Suggestions & micro-interventions</div>
+        </div>
+        <div class="messages" id="anaMessages">
+          <div class="msg ana">Hi — I'm Ana. I can suggest short interventions when I detect rising distraction. Click a group to get tailored tips.</div>
+        </div>
+        <div class="ana-controls">
+          <input id="userInput" placeholder="Ask Ana (mock) e.g. 'Make a 2-min break'" style="flex:1;padding:8px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:var(--white)" />
+          <button class="btn" id="askAna">Send</button>
+        </div>
+      </div>
+    </aside>
+
+    <footer>
+      <span>Focus+ &middot; Demo dashboard • Mock data only • UI prototype</span>
+    </footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="anaModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <strong>Ana — Recommendation</strong>
+      <p id="modalText" style="margin-top:10px;color:var(--muted);font-size:13px">Analyzing group attention metrics... Suggest: Short interactive checkpoint, rapid formative poll, then a 60–90s micro-task to re-engage. Consider alternating modalities (visual → kinesthetic) and call on two students for accountability.</p>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn primary" id="modalClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Mock data & UI logic
+  const GROUPS = 6; // 6 table groups
+  const TABLES_PER_GROUP = 5; // 5 tables each (center-top + 4 surrounding)
+  const TIMESTEPS = 60; // seconds
+
+  let tableScores = []; // [group][table] current distraction 0..1
+  let history = []; // attention timeline aggregated
+  let trendChart;
+
+  function seedRandom(seed=42){ // simple LCG
+    let s = seed % 2147483647; if(s<=0) s+=2147483646;
+    return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; }
+  }
+
+  function generateDemo(){
+    const rnd = seedRandom(Date.now()%100000);
+    tableScores = [];
+    history = [];
+    for(let g=0;g<GROUPS;g++){
+      const group=[];
+      for(let t=0;t<TABLES_PER_GROUP;t++){
+        // base distraction 0.05..0.25 + some group variance
+        const base = 0.05 + rnd()*0.2 + (g*0.02);
+        group.push(base);
+      }
+      tableScores.push(group);
+    }
+    // create timeline
+    for(let i=0;i<TIMESTEPS;i++){
+      // small random walk aggregated
+      let agg=0;
+      for(let g=0;g<GROUPS;g++) for(let t=0;t<TABLES_PER_GROUP;t++){
+        const noise = (rnd()-0.5)*0.02;
+        tableScores[g][t] = Math.max(0, Math.min(1, tableScores[g][t]+noise));
+        agg += tableScores[g][t];
+      }
+      history.push(agg/(GROUPS*TABLES_PER_GROUP));
+    }
+    renderClassroom();
+    updateStats();
+    updateTrendChart();
+    addAnaMessage('Demo dataset generated. Click groups to get recommendations.');
+  }
+
+  function renderClassroom(){
+    const root = document.getElementById('classroom');
+    root.innerHTML='';
+    for(let g=0;g<GROUPS;g++){
+      const groupDiv = document.createElement('div');
+      groupDiv.className='group';
+      groupDiv.dataset.group = g;
+      const h = document.createElement('h4');
+      h.innerHTML = `Group ${g+1} <span style="font-weight:600;color:var(--muted);font-size:11px">Avg ${(groupAverage(g)*100).toFixed(0)}%</span>`;
+      groupDiv.appendChild(h);
+
+      const layout = document.createElement('div'); layout.className='group-layout';
+      // center-top seat (index 0)
+      const center = document.createElement('div'); center.className='center-top seat';
+      const v0 = tableScores[g][0]; center.textContent = `C`;
+      center.style.background = scoreToColor(v0);
+      center.title = `Center - Distracted ${(v0*100).toFixed(0)}%`;
+      layout.appendChild(center);
+
+      // 2x2 grid for seats 1..4
+      const grid = document.createElement('div'); grid.className='grid2x2';
+      for(let i=1;i<=4;i++){
+        const v = tableScores[g][i];
+        const s = document.createElement('div'); s.className='seat'; s.textContent = i;
+        s.style.background = scoreToColor(v);
+        s.title = `Seat ${i} - Distracted ${(v*100).toFixed(0)}%`;
+        grid.appendChild(s);
+      }
+      layout.appendChild(grid);
+
+      groupDiv.appendChild(layout);
+      groupDiv.addEventListener('click', ()=>showAnaModal(g));
+      root.appendChild(groupDiv);
+    }
+  }
+
+  function groupAverage(g){
+    const sum = tableScores[g].reduce((a,b)=>a+b,0);
+    return sum/(tableScores[g].length);
+  }
+
+  function scoreToColor(v){
+    // v 0..1 -> green to red
+    const r = Math.min(255, Math.round(255 * Math.max(0, (v-0.4)/0.6)));
+    const g = Math.min(255, Math.round(255 * Math.max(0, (0.7 - v)/0.7)));
+    const b = 30;
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function updateStats(){
+    let agg=0; let topGroup=0; let topVal=-1;
+    for(let g=0;g<GROUPS;g++){
+      const ga = groupAverage(g);
+      agg += ga;
+      if(ga>topVal){topVal=ga;topGroup=g}
+    }
+    const overall = Math.round((agg/GROUPS)*100);
+    document.getElementById('overall').textContent = overall + '%';
+    document.getElementById('topGroup').textContent = `Group ${topGroup+1} (${Math.round(topVal*100)}%)`;
+  }
+
+  function initTrendChart(){
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    trendChart = new Chart(ctx,{
+      type:'line',
+      data:{labels: Array.from({length:TIMESTEPS},(_,i)=>i- TIMESTEPS+1), datasets:[{label:'Avg Distraction',data:history,fill:true,tension:0.3,backgroundColor:'rgba(255,80,80,0.06)',borderColor:'#ff6b6b',pointRadius:0}]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:1,ticks:{callback:v=>Math.round(v*100)+'%'}}},plugins:{legend:{display:false}}}
+    });
+  }
+
+  function updateTrendChart(){
+    if(!trendChart) return;
+    trendChart.data.datasets[0].data = history;
+    trendChart.update();
+  }
+
+  function simulateKeyword(){
+    // cause spikes in certain groups/tables
+    const affectedGroup = Math.floor(Math.random()*GROUPS);
+    for(let i=0;i<4;i++){
+      const g = (affectedGroup + i) % GROUPS;
+      for(let t=0;t<TABLES_PER_GROUP;t++){
+        tableScores[g][t] = Math.min(1, tableScores[g][t] + 0.18 + Math.random()*0.12);
+      }
+    }
+    // push new history points with spike
+    for(let i=0;i<6;i++){
+      let agg=0;
+      for(let g=0;g<GROUPS;g++) for(let t=0;t<TABLES_PER_GROUP;t++) agg += tableScores[g][t];
+      history.push(agg/(GROUPS*TABLES_PER_GROUP));
+      history.shift();
+    }
+    renderClassroom(); updateStats(); updateTrendChart();
+    addAnaMessage(`Keyword/Question triggered. Spike detected near Group ${affectedGroup+1}. Suggested micro-interventions generated.`);
+  }
+
+  function showAnaModal(g){
+    document.getElementById('selGroup').textContent = `Group ${g+1}`;
+    const modal = document.getElementById('anaModalBackdrop');
+    document.getElementById('modalText').innerHTML = `Group ${g+1} — Analysis complete. Recommendation: Apply a short interactive checkpoint (60–90s), deploy a 1-question formative poll, then a rapid task swap (visual → hands-on). Consider calling on two students for accountability and alternating modalities to reduce drift.`;
+    modal.style.display = 'flex';
+    addAnaMessage(`<strong>Group ${g+1} analysis:</strong> avg distracted ${(groupAverage(g)*100).toFixed(0)}%`);
+  }
+
+  document.getElementById('modalClose').addEventListener('click', ()=>{
+    document.getElementById('anaModalBackdrop').style.display='none';
+  });
+
+  function selectGroup(g){
+    // legacy - kept for compatibility
+    showAnaModal(g);
+  }
+
+  function generateSuggestions(avg,g){
+    const out=[];
+    if(avg>0.45){
+      out.push('High distraction. Try a 60s interactive poll or quick (1-question) peer quiz.');
+      out.push('Consider calling on 2 students from this group to answer a small question.');
+      out.push('Switch to a rapid 2-minute hands-on task to re-engage.');
+    } else if(avg>0.25){
+      out.push('Moderate distraction. Add a 90-second recap or a pair-discussion prompt.');
+      out.push('Use an on-screen checkpoint question to refocus attention.');
+    } else {
+      out.push('Group is attentive. Keep the pace — consider a quick challenge to sustain engagement.');
+    }
+    out.push(`Suggested checkpoint: \"Quick check: Explain the concept in 20s.\"`);
+    return out;
+  }
+
+  function addAnaMessage(text,escape=true){
+    const box = document.getElementById('anaMessages');
+    const el = document.createElement('div'); el.className='msg ana';
+    el.innerHTML = text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // user chat (mock)
+  document.getElementById('askAna').addEventListener('click', ()=>{
+    const txt = document.getElementById('userInput').value.trim();
+    if(!txt) return;
+    const box = document.getElementById('anaMessages');
+    const u = document.createElement('div'); u.className='msg user'; u.textContent = txt; box.appendChild(u);
+    document.getElementById('userInput').value='';
+    box.scrollTop = box.scrollHeight;
+    // canned reply
+    setTimeout(()=>{
+      let reply = '';
+      if(txt.toLowerCase().includes('break')) reply = 'Try a 90-second stretch break with a quick pop-quiz after — it often reduces drift by ~20%.';
+      else if(txt.toLowerCase().includes('quiz')) reply = 'Micro-quizzes (1–2 questions) every 8–10 minutes are effective. Consider using multiple choice with instant feedback.';
+      else reply = 'Try a pair-share prompt, followed by one volunteer per pair — this raises attention and social accountability.';
+      addAnaMessage(reply);
+    },700);
+  });
+
+  document.getElementById('btnStart').addEventListener('click', generateDemo);
+  document.getElementById('btnKeyword').addEventListener('click', simulateKeyword);
+  document.getElementById('btnReset').addEventListener('click', ()=>{history=[];tableScores=[];renderClassroom();updateStats();updateTrendChart();addAnaMessage('Dashboard reset.');document.getElementById('selGroup').textContent='None'});
+
+  // init
+  initTrendChart();
+  generateDemo();
+</script>
+</body>
+</html>

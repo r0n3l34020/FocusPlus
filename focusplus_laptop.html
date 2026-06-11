@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus+ | Get your Life Back</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #1e40af;
+            --dark-blue: #0f172a;
+            --medium-blue: #1e293b;
+            --light-blue: #3b82f6;
+            --accent-blue: #60a5fa;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --gray: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #0a1628 100%);
+            color: var(--white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--medium-blue);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 0.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            color: var(--gray);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: var(--white);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--white);
+            background: var(--primary-blue);
+        }
+
+        /* Page System */
+        .page {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--medium-blue);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--light-blue);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Timer Display */
+        .timer-display {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .timer-value {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--white);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-label {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-top: 1rem;
+        }
+
+        /* Video Container */
+        .video-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 16/9;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-badge.focused {
+            background: rgba(16, 185, 129, 0.9);
+            color: var(--white);
+        }
+
+        .status-badge.distracted {
+            background: rgba(239, 68, 68, 0.9);
+            color: var(--white);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Stats */
+        .stat-card {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .stat-value.success {
+            color: var(--success);
+        }
+
+        .stat-value.danger {
+            color: var(--danger);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--light-blue);
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--gray);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            color: var(--white);
+        }
+
+        /* Team Cards */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .team-member {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .member-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .member-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .member-role {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        /* Study Group */
+        .group-card {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .group-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .rank-badge {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--medium-blue);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .info-box.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            background: var(--medium-blue);
+            border: 2px solid var(--light-blue);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 1500;
+            animation: slideIn 0.3s ease-out;
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification-header {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-body {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+            }
+
+            .timer-value {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">Focus+</div>
+            <ul class="nav-menu">
+                <li><a class="nav-link active" data-page="timer">Timer</a></li>
+                <li><a class="nav-link" data-page="tracking">Tracking Hub</a></li>
+                <li><a class="nav-link" data-page="trends">Focus Trends</a></li>
+                <li><a class="nav-link" data-page="study">Study Material</a></li>
+                <li><a class="nav-link" data-page="groups">Study Groups</a></li>
+                <li><a class="nav-link" data-page="about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Timer/Stopwatch Page -->
+    <div class="page active" id="timerPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Study Timer</h1>
+                <p class="page-subtitle">Stay focused with Pomodoro technique</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">⏱️ Pomodoro Timer</div>
+                    <div class="timer-display">
+                        <div class="timer-value" id="timerValue">25:00</div>
+                        <div class="timer-label" id="timerLabel">Ready to start</div>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Study Time (min)</label>
+                            <input type="number" class="form-input" id="studyTime" value="25" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Break Time (min)</label>
+                            <input type="number" class="form-input" id="breakTime" value="5" min="1">
+                        </div>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <button class="btn btn-success" id="timerStart">Start Timer</button>
+                        <button class="btn btn-danger" id="timerStop" disabled>Stop</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">⏲️ Stopwatch</div>
+                    <div class="timer-display">
+                        <div class="timer-value" id="stopwatchValue">00:00:00</div>
+                        <div class="timer-label">Free-flowing timer</div>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <button class="btn btn-success" id="stopwatchStart">Start</button>
+                        <button class="btn btn-danger" id="stopwatchStop" disabled>Stop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tracking Hub Page -->
+    <div class="page" id="trackingPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Tracking Hub</h1>
+                <p class="page-subtitle">Monitor your focus and productivity</p>
+            </div>
+
+            <div class="info-box">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                </svg>
+                100% Private - All processing happens locally on your device. No data is uploaded.
+            </div>
+
+            <div class="grid-2">
+                <!-- Webcam Tracking -->
+                <div class="card">
+                    <div class="card-header">📹 Webcam Tracking</div>
+                    <div class="video-container" style="margin-bottom: 1rem;">
+                        <video id="webcam" autoplay playsinline></video>
+                        <canvas id="canvas"></canvas>
+                        <div class="video-overlay">
+                            <div id="webcamStatus" class="status-badge focused">
+                                <div class="status-indicator"></div>
+                                <span>Focused</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <button class="btn btn-primary" id="webcamStart">Start Tracking</button>
+                        <button class="btn btn-danger" id="webcamStop" disabled>Stop</button>
+                    </div>
+                </div>
+
+                <!-- Tab Monitoring -->
+                <div class="card">
+                    <div class="card-header">🔍 Tab Monitoring</div>
+                    <div class="stat-card" style="margin-bottom: 1rem;">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value" id="tabStatus">Inactive</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                            <input type="checkbox" id="youtubeTutorials">
+                            <span>Allow YouTube for tutorials</span>
+                        </label>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <button class="btn btn-primary" id="tabStart">Start Monitoring</button>
+                        <button class="btn btn-danger" id="tabStop" disabled>Stop</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combined Stats -->
+            <div class="card">
+                <div class="card-header">📊 Session Statistics</div>
+                <div class="grid-4">
+                    <div class="stat-card">
+                        <div class="stat-label">Focus Time</div>
+                        <div class="stat-value success" id="focusTimeStat">0:00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Distractions</div>
+                        <div class="stat-value danger" id="distractionsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Tab Violations</div>
+                        <div class="stat-value danger" id="violationsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Focus Score</div>
+                        <div class="stat-value" id="focusScoreStat">100%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Trends Page -->
+    <div class="page" id="trendsPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Focus Trends</h1>
+                <p class="page-subtitle">Analyze your productivity patterns</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">🌅 Best Focus Window</div>
+                    <div class="stat-value" id="bestWindow">9:00 AM - 11:00 AM</div>
+                    <p style="color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">95% average focus score</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">🌙 Most Distracted Window</div>
+                    <div class="stat-value danger" id="worstWindow">8:00 PM - 10:00 PM</div>
+                    <p style="color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">62% average focus score</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">💡 Suggested Study Window</div>
+                <div class="stat-value" id="suggestedWindow">7:00 AM - 9:00 AM</div>
+                <p style="color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">Based on your peak performance patterns and minimal distraction history</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">📱 Most Switched Tabs</div>
+                <div class="grid-2">
+                    <div>
+                        <ol style="color: var(--gray); font-size: 0.875rem; line-height: 2;">
+                            <li>Instagram - 24 switches</li>
+                            <li>YouTube - 18 switches</li>
+                            <li>TikTok - 15 switches</li>
+                            <li>Twitter/X - 12 switches</li>
+                            <li>Facebook - 8 switches</li>
+                        </ol>
+                    </div>
+                    <canvas id="tabChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Material Page -->
+    <div class="page" id="studyPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Study Resources</h1>
+                <p class="page-subtitle">Access materials and track your progress</p>
+            </div>
+
+            <!-- Study Material Section -->
+            <div class="card">
+                <div class="card-header">📚 Study Materials</div>
+                <div class="grid-2" style="margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Board</label>
+                        <select class="form-select" id="boardSelect">
+                            <option value="igcse">IGCSE</option>
+                            <option value="cbse">CBSE</option>
+                            <option value="icse">ICSE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Grade</label>
+                        <select class="form-select" id="gradeSelect">
+                            <option value="9">Year 9 / Grade 8</option>
+                            <option value="10">Year 10 / Grade 9</option>
+                            <option value="11">Year 11 / Grade 10</option>
+                            <option value="12">Year 12 / Grade 11</option>
+                            <option value="13">Year 13 / Grade 12</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-3" id="subjectMaterials">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Past Paper Tracker -->
+            <div class="card" id="pastPaperSection">
+                <div class="card-header">📝 Past Paper Tracker</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-input" id="paperSubject" placeholder="e.g., Mathematics">
+                </div>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label class="form-label">Paper</label>
+                        <input type="text" class="form-input" id="paperName" placeholder="e.g., Paper 1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Score</label>
+                        <input type="number" class="form-input" id="paperScore" placeholder="e.g., 85">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Marks</label>
+                        <input type="number" class="form-input" id="paperTotal" placeholder="e.g., 100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Error Log</label>
+                    <textarea class="form-input" id="errorLog" rows="3" placeholder="Note mistakes and areas for improvement..."></textarea>
+                </div>
+                <button class="btn btn-success" id="addPaper">Add Paper Record</button>
+
+                <div style="margin-top: 2rem;">
+                    <div class="form-group">
+                        <label class="form-label">View Progress For</label>
+                        <select class="form-select" id="progressSubject">
+                            <option value="">Select a subject...</option>
+                        </select>
+                    </div>
+                    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1.5rem;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-container" style="margin-top: 2rem;">
+                    <table id="paperTable">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Paper</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Errors</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paperTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--gray);">No papers recorded yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Groups Page -->
+    <div class="page" id="groupsPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Study Groups</h1>
+                <p class="page-subtitle">Collaborate and compete with peers</p>
+            </div>
+
+            <div class="info-box warning">
+                <strong>How it works:</strong><br>
+                1. Webcam tracking and tab detection monitor distractions - your timer pauses when distracted<br>
+                2. Repeated distractions trigger a 2-minute soft lock to help you refocus
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div class="card-header" style="margin-bottom: 0;">👥 Active Groups</div>
+                    <button class="btn btn-primary" id="createGroupBtn">Create Group</button>
+                </div>
+
+                <!-- Demo Group -->
+                <div class="group-card">
+                    <div class="group-header">
+                        <div class="group-name">NIRV(ana) Study Squad</div>
+                        <div style="color: var(--gray); font-size: 0.875rem;">Target: 2 hours</div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="rank-badge">#1</div>
+                                <span style="font-weight: 500;">Ronel</span>
+                            </div>
+                            <span style="color: var(--success); font-weight: 600;">2.3 hrs</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="rank-badge">#2</div>
+                                <span style="font-weight: 500;">Nishchal</span>
+                            </div>
+                            <span style="color: var(--success); font-weight: 600;">1.9 hrs</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 95%;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="rank-badge">#3</div>
+                                <span style="font-weight: 500;">Vedanth</span>
+                            </div>
+                            <span style="color: var(--warning); font-weight: 600;">1.4 hrs</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 70%; background: var(--warning);"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="rank-badge">#4</div>
+                                <span style="font-weight: 500;">Ishan</span>
+                            </div>
+                            <span style="color: var(--danger); font-weight: 600;">0.8 hrs</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 40%; background: var(--danger);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="userGroups"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Page -->
+    <div class="page" id="aboutPage">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Team NIRV(ana)</h1>
+                <p class="page-subtitle">The minds behind Focus+</p>
+            </div>
+
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-icon">🎨</div>
+                    <div class="member-name">Nishchal Ramnani</div>
+                    <div class="member-role">Product Designer & Presentation Lead</div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-icon">📋</div>
+                    <div class="member-name">Ishan Mohammed Isak</div>
+                    <div class="member-role">Strategy & Content Lead</div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-icon">⚙️</div>
+                    <div class="member-name">Ronel Jonathan</div>
+                    <div class="member-role">Lead Engineer & Technical Architect</div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-icon">✨</div>
+                    <div class="member-name">Vedanth Achanta</div>
+                    <div class="member-role">Creative Director & Testing</div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-icon">🤖</div>
+                    <div class="member-name">Ana</div>
+                    <div class="member-role">Focus+ AI Chatbot & Tutor<br><em style="font-size: 0.75rem; color: var(--gray);">(work underway)</em></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">🚀 Future Aims</div>
+                <div style="display: grid; gap: 1rem;">
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Classroom Integration</div>
+                        <div style="font-size: 0.875rem; color: var(--gray);">Making Focus+ accessible to anyone, anywhere</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">School and LMS Integration</div>
+                        <div style="font-size: 0.875rem; color: var(--gray);">Integrate with school platforms to help them gain focus insights with academic performance and schedules</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Improved Attention Detection Models</div>
+                        <div style="font-size: 0.875rem; color: var(--gray);">Adjusted across lighting, posture and study environments</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Custom Focus Modes</div>
+                        <div style="font-size: 0.875rem; color: var(--gray);">Expanding the Analog and Digital modes to Cram, Homework, Exam and Light Reading</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Offline-first Optimization</div>
+                        <div style="font-size: 0.875rem; color: var(--gray);">Full functionality without internet, optional syncs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="modal" id="createGroupModal">
+        <div class="modal-content">
+            <div class="modal-header">Create Study Group</div>
+            <div class="form-group">
+                <label class="form-label">Group Name</label>
+                <input type="text" class="form-input" id="groupName" placeholder="Enter group name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Study Target (hours)</label>
+                <input type="number" class="form-input" id="groupTarget" value="2" min="1" step="0.5">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveGroup">Save Group</button>
+                <button class="btn btn-danger" id="cancelGroup">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation System
+        const pages = document.querySelectorAll('.page');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const targetPage = link.getAttribute('data-page');
+                
+                // Update nav active state
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // Show target page
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById(targetPage + 'Page').classList.add('active');
+            });
+        });
+
+        // Timer System
+        class TimerSystem {
+            constructor() {
+                this.timerInterval = null;
+                this.stopwatchInterval = null;
+                this.timerSeconds = 0;
+                this.stopwatchSeconds = 0;
+                this.isTimerBreak = false;
+                this.initUI();
+            }
+
+            initUI() {
+                document.getElementById('timerStart').addEventListener('click', () => this.startTimer());
+                document.getElementById('timerStop').addEventListener('click', () => this.stopTimer());
+                document.getElementById('stopwatchStart').addEventListener('click', () => this.startStopwatch());
+                document.getElementById('stopwatchStop').addEventListener('click', () => this.stopStopwatch());
+            }
+
+            startTimer() {
+                const studyMinutes = parseInt(document.getElementById('studyTime').value);
+                this.timerSeconds = studyMinutes * 60;
+                this.isTimerBreak = false;
+                
+                document.getElementById('timerStart').disabled = true;
+                document.getElementById('timerStop').disabled = false;
+                document.getElementById('timerLabel').textContent = 'Study session';
+                
+                this.showNotification('Timer Started', 'Enable webcam and tab monitoring for best results!');
+                
+                this.timerInterval = setInterval(() => {
+                    this.timerSeconds--;
+                    this.updateTimerDisplay();
+                    
+                    if (this.timerSeconds <= 0) {
+                        if (!this.isTimerBreak) {
+                            // Switch to break
+                            const breakMinutes = parseInt(document.getElementById('breakTime').value);
+                            this.timerSeconds = breakMinutes * 60;
+                            this.isTimerBreak = true;
+                            document.getElementById('timerLabel').textContent = 'Break time!';
+                            this.showNotification('Break Time!', 'Take a well-deserved rest 🎉');
+                        } else {
+                            // Timer complete
+                            this.stopTimer();
+                            this.showNotification('Session Complete!', 'Great work! Ready for another round?');
+                        }
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                clearInterval(this.timerInterval);
+                document.getElementById('timerStart').disabled = false;
+                document.getElementById('timerStop').disabled = true;
+                document.getElementById('timerLabel').textContent = 'Ready to start';
+                this.timerSeconds = parseInt(document.getElementById('studyTime').value) * 60;
+                this.updateTimerDisplay();
+            }
+
+            updateTimerDisplay() {
+                const minutes = Math.floor(this.timerSeconds / 60);
+                const seconds = this.timerSeconds % 60;
+                document.getElementById('timerValue').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            startStopwatch() {
+                document.getElementById('stopwatchStart').disabled = true;
+                document.getElementById('stopwatchStop').disabled = false;
+                
+                this.showNotification('Stopwatch Started', 'Enable webcam and tab monitoring for best results!');
+                
+                this.stopwatchInterval = setInterval(() => {
+                    this.stopwatchSeconds++;
+                    this.updateStopwatchDisplay();
+                }, 1000);
+            }
+
+            stopStopwatch() {
+                clearInterval(this.stopwatchInterval);
+                document.getElementById('stopwatchStart').disabled = false;
+                document.getElementById('stopwatchStop').disabled = true;
+            }
+
+            updateStopwatchDisplay() {
+                const hours = Math.floor(this.stopwatchSeconds / 3600);
+                const minutes = Math.floor((this.stopwatchSeconds % 3600) / 60);
+                const seconds = this.stopwatchSeconds % 60;
+                document.getElementById('stopwatchValue').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            showNotification(title, message) {
+                const notif = document.createElement('div');
+                notif.className = 'notification';
+                notif.innerHTML = `
+                    <div class="notification-header">${title}</div>
+                    <div class="notification-body">${message}</div>
+                `;
+                document.body.appendChild(notif);
+                setTimeout(() => notif.remove(), 4000);
+            }
+        }
+
+        // Tracking System
+        class TrackingSystem {
+            constructor() {
+                this.webcamActive = false;
+                this.tabActive = false;
+                this.focusTime = 0;
+                this.distractions = 0;
+                this.violations = 0;
+                this.startTime = null;
+                this.faceMesh = null;
+                this.camera = null;
+                
+                this.initUI();
+            }
+
+            initUI() {
+                document.getElementById('webcamStart').addEventListener('click', () => this.startWebcam());
+                document.getElementById('webcamStop').addEventListener('click', () => this.stopWebcam());
+                document.getElementById('tabStart').addEventListener('click', () => this.startTab());
+                document.getElementById('tabStop').addEventListener('click', () => this.stopTab());
+                
+                // Tab visibility monitoring
+                document.addEventListener('visibilitychange', () => {
+                    if (this.tabActive && document.hidden) {
+                        this.violations++;
+                        this.updateStats();
+                    }
+                });
+            }
+
+            async startWebcam() {
+                try {
+                    const video = document.getElementById('webcam');
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 1280, height: 720 }
+                    });
+                    video.srcObject = stream;
+                    
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            const canvas = document.getElementById('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            resolve();
+                        };
+                    });
+
+                    this.faceMesh = new FaceMesh({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+                    });
+
+                    this.faceMesh.setOptions({
+                        maxNumFaces: 1,
+                        refineLandmarks: true,
+                        minDetectionConfidence: 0.7,
+                        minTrackingConfidence: 0.7
+                    });
+
+                    this.faceMesh.onResults((results) => this.onFaceResults(results));
+
+                    this.camera = new Camera(video, {
+                        onFrame: async () => {
+                            await this.faceMesh.send({ image: video });
+                        },
+                        width: 1280,
+                        height: 720
+                    });
+
+                    this.camera.start();
+                    this.webcamActive = true;
+                    this.startTime = Date.now();
+                    
+                    document.getElementById('webcamStart').disabled = true;
+                    document.getElementById('webcamStop').disabled = false;
+                    
+                    this.updateStats();
+                } catch (error) {
+                    alert('Camera access denied. Please allow camera permissions.');
+                }
+            }
+
+            stopWebcam() {
+                if (this.camera) this.camera.stop();
+                const video = document.getElementById('webcam');
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                
+                this.webcamActive = false;
+                document.getElementById('webcamStart').disabled = false;
+                document.getElementById('webcamStop').disabled = true;
+            }
+
+            onFaceResults(results) {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                    const landmarks = results.multiFaceLandmarks[0];
+                    const isFocused = this.checkFocus(landmarks);
+                    
+                    const badge = document.getElementById('webcamStatus');
+                    if (isFocused) {
+                        badge.className = 'status-badge focused';
+                        badge.innerHTML = '<div class="status-indicator"></div><span>Focused</span>';
+                        this.focusTime += 100;
+                    } else {
+                        badge.className = 'status-badge distracted';
+                        badge.innerHTML = '<div class="status-indicator"></div><span>Distracted</span>';
+                        this.distractions++;
+                    }
+                    
+                    this.drawNoseTriangle(landmarks, ctx, canvas.width, canvas.height);
+                    this.updateStats();
+                }
+            }
+
+            checkFocus(landmarks) {
+                const noseTip = landmarks[1];
+                const leftEye = landmarks[33];
+                const rightEye = landmarks[263];
+                
+                const centerX = (leftEye.x + rightEye.x) / 2;
+                const centerY = (leftEye.y + rightEye.y) / 2;
+                
+                const hDev = Math.abs(noseTip.x - centerX);
+                const vDev = Math.abs(noseTip.y - centerY);
+                
+                return hDev < 0.045 && vDev < 0.045;
+            }
+
+            drawNoseTriangle(landmarks, ctx, w, h) {
+                const noseTip = landmarks[1];
+                const leftNostril = landmarks[98];
+                const rightNostril = landmarks[327];
+
+                ctx.strokeStyle = '#60a5fa';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgba(96, 165, 250, 0.2)';
+                
+                ctx.beginPath();
+                ctx.moveTo(noseTip.x * w, noseTip.y * h);
+                ctx.lineTo(leftNostril.x * w, leftNostril.y * h);
+                ctx.lineTo(rightNostril.x * w, rightNostril.y * h);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            startTab() {
+                this.tabActive = true;
+                document.getElementById('tabStart').disabled = true;
+                document.getElementById('tabStop').disabled = false;
+                document.getElementById('tabStatus').textContent = 'Active';
+                document.getElementById('tabStatus').style.color = 'var(--success)';
+            }
+
+            stopTab() {
+                this.tabActive = false;
+                document.getElementById('tabStart').disabled = false;
+                document.getElementById('tabStop').disabled = true;
+                document.getElementById('tabStatus').textContent = 'Inactive';
+                document.getElementById('tabStatus').style.color = 'var(--white)';
+            }
+
+            updateStats() {
+                const focusSec = Math.floor(this.focusTime / 1000);
+                const mins = Math.floor(focusSec / 60);
+                const secs = focusSec % 60;
+                document.getElementById('focusTimeStat').textContent = 
+                    `${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                document.getElementById('distractionsStat').textContent = this.distractions;
+                document.getElementById('violationsStat').textContent = this.violations;
+                
+                const totalTime = Date.now() - (this.startTime || Date.now());
+                const score = totalTime > 0 
+                    ? Math.round((this.focusTime / totalTime) * 100)
+                    : 100;
+                document.getElementById('focusScoreStat').textContent = `${Math.min(score, 100)}%`;
+                
+                // Save to localStorage for trends
+                this.saveSession();
+            }
+
+            saveSession() {
+                const hour = new Date().getHours();
+                const sessions = JSON.parse(localStorage.getItem('focusSessions') || '[]');
+                sessions.push({
+                    hour,
+                    focusTime: this.focusTime,
+                    distractions: this.distractions,
+                    timestamp: Date.now()
+                });
+                localStorage.setItem('focusSessions', JSON.stringify(sessions));
+            }
+        }
+
+        // Study Materials
+        const studyMaterials = {
+            igcse: {
+                9: [
+                    { name: 'Mathematics', link: 'https://www.bbc.co.uk/bitesize/examspecs/z9p3mnb' },
+                    { name: 'English', link: 'https://www.bbc.co.uk/bitesize/examspecs/zxqncwx' },
+                    { name: 'Science', link: 'https://www.bbc.co.uk/bitesize/examspecs/zsc8jty' },
+                    { name: 'Physics', link: '#demo' },
+                    { name: 'Chemistry', link: '#demo' },
+                    { name: 'Biology', link: '#demo' },
+                    { name: 'Computer Science', link: '#demo' },
+                    { name: 'Business Studies', link: '#demo' },
+                ],
+                10: [
+                    { name: 'Mathematics', link: 'https://www.savemyexams.com/igcse/maths/' },
+                    { name: 'Physics', link: 'https://www.savemyexams.com/igcse/physics/' },
+                    { name: 'Chemistry', link: 'https://www.savemyexams.com/igcse/chemistry/' },
+                    { name: 'Biology', link: '#demo' },
+                    { name: 'English', link: '#demo' },
+                    { name: 'Computer Science', link: '#demo' },
+                ]
+            },
+            cbse: {
+                9: [
+                    { name: 'Mathematics', link: 'https://ncert.nic.in/textbook.php?iemh1=0-14' },
+                    { name: 'Science', link: 'https://ncert.nic.in/textbook.php?iesc1=0-17' },
+                    { name: 'Social Science', link: 'https://ncert.nic.in/textbook.php?iess1=0-15' },
+                    { name: 'English', link: '#demo' },
+                    { name: 'Hindi', link: '#demo' },
+                ]
+            },
+            icse: {
+                9: [
+                    { name: 'Mathematics', link: '#demo' },
+                    { name: 'Physics', link: '#demo' },
+                    { name: 'Chemistry', link: '#demo' },
+                    { name: 'Biology', link: '#demo' },
+                    { name: 'English', link: '#demo' },
+                ]
+            }
+        };
+
+        function loadStudyMaterials() {
+            const board = document.getElementById('boardSelect').value;
+            const grade = document.getElementById('gradeSelect').value;
+            const container = document.getElementById('subjectMaterials');
+            
+            const materials = studyMaterials[board]?.[grade] || [];
+            
+            container.innerHTML = materials.map(m => `
+                <a href="${m.link}" target="_blank" class="stat-card" style="text-decoration: none; cursor: pointer; transition: transform 0.2s;">
+                    <div class="stat-label">${m.name}</div>
+                    <div style="font-size: 2rem;">📚</div>
+                </a>
+            `).join('');
+        }
+
+        document.getElementById('boardSelect').addEventListener('change', loadStudyMaterials);
+        document.getElementById('gradeSelect').addEventListener('change', loadStudyMaterials);
+        loadStudyMaterials();
+
+        // Past Paper Tracker
+        class PaperTracker {
+            constructor() {
+                this.papers = JSON.parse(localStorage.getItem('papers') || '[]');
+                this.chart = null;
+                this.initUI();
+                this.loadPapers();
+            }
+
+            initUI() {
+                document.getElementById('addPaper').addEventListener('click', () => this.addPaper());
+                document.getElementById('progressSubject').addEventListener('change', () => this.updateChart());
+            }
+
+            addPaper() {
+                const subject = document.getElementById('paperSubject').value;
+                const paper = document.getElementById('paperName').value;
+                const score = parseInt(document.getElementById('paperScore').value);
+                const total = parseInt(document.getElementById('paperTotal').value);
+                const errors = document.getElementById('errorLog').value;
+
+                if (!subject || !paper || !score || !total) {
+                    alert('Please fill all fields');
+                    return;
+                }
+
+                const percentage = Math.round((score / total) * 100);
+                
+                this.papers.push({
+                    subject,
+                    paper,
+                    score,
+                    total,
+                    percentage,
+                    errors,
+                    date: new Date().toLocaleDateString()
+                });
+
+                localStorage.setItem('papers', JSON.stringify(this.papers));
+                this.loadPapers();
+                
+                // Clear form
+                document.getElementById('paperSubject').value = '';
+                document.getElementById('paperName').value = '';
+                document.getElementById('paperScore').value = '';
+                document.getElementById('paperTotal').value = '';
+                document.getElementById('errorLog').value = '';
+            }
+
+            loadPapers() {
+                const tbody = document.getElementById('paperTableBody');
+                
+                if (this.papers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--gray);">No papers recorded yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = this.papers.map(p => `
+                    <tr>
+                        <td>${p.subject}</td>
+                        <td>${p.paper}</td>
+                        <td>${p.score}/${p.total}</td>
+                        <td style="color: ${p.percentage >= 70 ? 'var(--success)' : p.percentage >= 50 ? 'var(--warning)' : 'var(--danger)'}">
+                            ${p.percentage}%
+                        </td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.errors || 'None'}</td>
+                        <td>${p.date}</td>
+                    </tr>
+                `).join('');
+
+                // Update subject dropdown
+                const subjects = [...new Set(this.papers.map(p => p.subject))];
+                const select = document.getElementById('progressSubject');
+                select.innerHTML = '<option value="">Select a subject...</option>' + 
+                    subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+
+            updateChart() {
+                const subject = document.getElementById('progressSubject').value;
+                if (!subject) return;
+
+                const subjectPapers = this.papers.filter(p => p.subject === subject);
+                
+                if (this.chart) this.chart.destroy();
+
+                const ctx = document.getElementById('progressChart').getContext('2d');
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: subjectPapers.map((p, i) => `Paper ${i + 1}`),
+                        datasets: [{
+                            label: 'Score %',
+                            data: subjectPapers.map(p => p.percentage),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: 'rgba(59, 130, 246, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: 'rgba(59, 130, 246, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Study Groups
+        document.getElementById('createGroupBtn').addEventListener('click', () => {
+            document.getElementById('createGroupModal').classList.add('active');
+        });
+
+        document.getElementById('cancelGroup').addEventListener('click', () => {
+            document.getElementById('createGroupModal').classList.remove('active');
+        });
+
+        document.getElementById('saveGroup').addEventListener('click', () => {
+            const name = document.getElementById('groupName').value;
+            const target = document.getElementById('groupTarget').value;
+            
+            if (!name) {
+                alert('Please enter a group name');
+                return;
+            }
+
+            const groups = JSON.parse(localStorage.getItem('userGroups') || '[]');
+            groups.push({ name, target, members: [] });
+            localStorage.setItem('userGroups', JSON.stringify(groups));
+            
+            loadUserGroups();
+            document.getElementById('createGroupModal').classList.remove('active');
+            document.getElementById('groupName').value = '';
+        });
+
+        function loadUserGroups() {
+            const groups = JSON.parse(localStorage.getItem('userGroups') || '[]');
+            const container = document.getElementById('userGroups');
+            
+            container.innerHTML = groups.map(g => `
+                <div class="group-card">
+                    <div class="group-header">
+                        <div class="group-name">${g.name}</div>
+                        <div style="color: var(--gray); font-size: 0.875rem;">Target: ${g.target} hours</div>
+                    </div>
+                    <div style="margin-top: 1rem; color: var(--gray); font-size: 0.875rem; text-align: center;">
+                        Invite members to join this group
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        loadUserGroups();
+
+        // Trends Chart
+        const tabCtx = document.getElementById('tabChart').getContext('2d');
+        new Chart(tabCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Instagram', 'YouTube', 'TikTok', 'Twitter/X', 'Facebook'],
+                datasets: [{
+                    label: 'Switches',
+                    data: [24, 18, 15, 12, 8],
+                    backgroundColor: '#ef4444'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(59, 130, 246, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Initialize systems
+        const timerSystem = new TimerSystem();
+        const trackingSystem = new TrackingSystem();
+        const paperTracker = new PaperTracker();
+    </script>
+</body>
+</html>
